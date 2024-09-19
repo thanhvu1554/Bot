@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
