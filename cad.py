@@ -13,7 +13,7 @@ LOG_BOT_TOKEN = '5726763371:AAG7tvRAA-YOzUAKdqfYPH3zJNCrK_PFai0'
 LOG_CHAT_ID = '2077786453'
 
 # RapidAPI Key và URL cho GPT-4
-GPT_API_KEY = "e710048e2bmshb2c56bd23b6e5c8p13c3jsn55207155321d"
+GPT_API_KEY = "e710048e2bmshb2c56bd23b6e5c8p13c3c3jsn55207155321d"
 GPT_API_HOST = "chatgpt-42.p.rapidapi.com"
 GPT_API_URL = "https://chatgpt-42.p.rapidapi.com/conversationgpt4"
 
@@ -56,7 +56,7 @@ def gpt4_response(message):
     
     if response.status_code == 200:
         data = response.json()
-        return data.get("response", "No response from GPT-4")
+        return data.get("result", "No response from GPT-4")
     else:
         return "Lỗi khi kết nối GPT-4"
 
