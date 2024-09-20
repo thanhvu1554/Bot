@@ -1,219 +1,98 @@
 import logging
-import base64
-import io
-from telegram import Update, ParseMode
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from Crypto.Cipher import AES
-from binascii import unhexlify, hexlify
-import morse3 as morse
-import heapq
-from collections import defaultdict
+from telegram import Update, Bot
+from telegram.ext import Updater, CommandHandler, CallbackContext
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 # Token của bot
 TOKEN = '5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro'
 
 # Thiết lập logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Huffman coding implementation
-class HuffmanCoding:
-    def build_frequency_dict(self, text):
-        frequency = defaultdict(int)
-        for character in text:
-            frequency[character] += 1
-        return frequency
+# Hàm để khởi động bot
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Chào mừng bạn đến với bot kiểm tra tài khoản Netflix! Sử dụng lệnh /check <user> <pass> để kiểm tra.')
 
-    def build_huffman_tree(self, frequency):
-        heap = [[weight, [char, ""]] for char, weight in frequency.items()]
-        heapq.heapify(heap)
-        while len(heap) > 1:
-            lo = heapq.heappop(heap)
-            hi = heapq.heappop(heap)
-            for pair in lo[1:]:
-                pair[1] = '0' + pair[1]
-            for pair in hi[1:]:
-                pair[1] = '1' + pair[1]
-            heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:]])
-        return sorted(heapq.heappop(heap)[1:], key=lambda p: (len(p[-1]), p))
-
-    def huffman_encoding(self, text):
-        frequency = self.build_frequency_dict(text)
-        huffman_tree = self.build_huffman_tree(frequency)
-        huff_dict = {char: code for char, code in huffman_tree}
-        encoded_text = ''.join(huff_dict[char] for char in text)
-        return encoded_text, huff_dict
-
-    def huffman_decoding(self, encoded_text, huff_dict):
-        reverse_huff_dict = {v: k for k, v in huff_dict.items()}
-        current_code = ""
-        decoded_text = ""
-        for bit in encoded_text:
-            current_code += bit
-            if current_code in reverse_huff_dict:
-                decoded_text += reverse_huff_dict[current_code]
-                current_code = ""
-        return decoded_text
-
-# Mã hóa và giải mã AES cho dữ liệu
-def encode_aes(data, key):
-    cipher = AES.new(key.encode('utf-8'), AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
-    return hexlify(cipher.nonce + tag + ciphertext).decode('utf-8')
-
-def decode_aes(data, key):
-    raw = unhexlify(data)
-    nonce = raw[:16]
-    tag = raw[16:32]
-    ciphertext = raw[32:]
-    cipher = AES.new(key.encode('utf-8'), AES.MODE_EAX, nonce=nonce)
-    return cipher.decrypt_and_verify(ciphertext, tag).decode('utf-8')
-
-# Mã hóa file âm thanh
-def encrypt_audio(update: Update, context: CallbackContext) -> None:
-    try:
-        # Lấy file âm thanh từ người dùng
-        file = update.message.document.get_file()
-        file_data = file.download_as_bytearray()
-
-        # Tạo khóa AES (16 bytes)
-        key = "mysecretpassword".ljust(16)
-        cipher = AES.new(key.encode('utf-8'), AES.MODE_EAX)
-        ciphertext, tag = cipher.encrypt_and_digest(file_data)
-
-        # Gộp nonce, tag và ciphertext
-        encrypted_data = cipher.nonce + tag + ciphertext
-
-        # Lưu vào file văn bản
-        bio = io.BytesIO(hexlify(encrypted_data).decode('utf-8').encode())
-        bio.name = "encrypted_audio.txt"
-        bio.seek(0)
-
-        update.message.reply_document(document=bio)
+# Hàm để kiểm tra tài khoản Netflix
+def check_account(update: Update, context: CallbackContext) -> None:
+    if len(context.args) != 2:
+        update.message.reply_text('Vui lòng nhập đúng định dạng: /check <user> <pass>')
+        return
     
-    except Exception as e:
-        update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
-
-# Giải mã file âm thanh
-def decrypt_audio(update: Update, context: CallbackContext) -> None:
-    try:
-        # Lấy file văn bản chứa dữ liệu mã hóa từ người dùng
-        file = update.message.document.get_file()
-        file_data = file.download_as_bytearray()
-
-        # Tạo khóa AES (16 bytes)
-        key = "mysecretpassword".ljust(16)
-        raw_data = unhexlify(file_data.decode('utf-8'))
-
-        nonce = raw_data[:16]
-        tag = raw_data[16:32]
-        ciphertext = raw_data[32:]
-
-        cipher = AES.new(key.encode('utf-8'), AES.MODE_EAX, nonce=nonce)
-        decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
-
-        # Trả lại file âm thanh gốc
-        bio = io.BytesIO(decrypted_data)
-        bio.name = "decrypted_audio.mp3"
-        bio.seek(0)
-
-        update.message.reply_document(document=bio)
+    user = context.args[0]
+    password = context.args[1]
     
-    except Exception as e:
-        update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
-
-# Command encode
-def encode_command(update: Update, context: CallbackContext) -> None:
-    try:
-        encode_type = context.args[0].lower()
-        value = ' '.join(context.args[1:])
-        
-        if encode_type == 'base64':
-            encoded = base64.b64encode(value.encode()).decode()
-        elif encode_type == 'aes':
-            key = "mysecretpassword"  # Khóa cho AES
-            encoded = encode_aes(value, key)
-        elif encode_type == 'morse':
-            encoded = morse.encode(value)
-        elif encode_type == 'huffman':
-            huffman = HuffmanCoding()
-            encoded, _ = huffman.huffman_encoding(value)
-        else:
-            update.message.reply_text(f"Loại mã hóa '{encode_type}' không được hỗ trợ.")
-            return
-        
-        update.message.reply_text(f"<b>Encoded:</b> <code>{encoded}</code>", parse_mode=ParseMode.HTML)
+    # Khởi động trình duyệt
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     
-    except Exception as e:
-        update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
-
-# Command decode
-def decode_command(update: Update, context: CallbackContext) -> None:
     try:
-        value = ' '.join(context.args)
-        decoded = None
+        driver.get('https://www.netflix.com/youraccount')
+        time.sleep(1)
         
-        # Try to decode using different methods
+        # Nhập email
+        email_input = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div[2]/div/form/div[1]/div/div[1]/input')
+        email_input.send_keys(user)
+        time.sleep(0.6)
+        
+        # Nhập mật khẩu
+        password_input = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div[2]/div/form/div[2]/div/div[1]/input')
+        password_input.send_keys(password)
+        time.sleep(0.6)
+        
+        # Gửi form
+        submit_button = driver.find_element(By.CSS_SELECTOR, '#appMountPoint > div > div > div.default-ltr-cache-8hdzfz.eyojgsc0 > div > form > button.e1ax5wel2.ew97par0.default-ltr-cache-62lxnw.e1ff4m3w2')
+        submit_button.click()
+        time.sleep(5.5)
+        
+        # Kiểm tra thông báo lỗi
         try:
-            decoded = base64.b64decode(value.encode()).decode()
+            error_message = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div[2]/div/header/div/div/div').text
+            if 'Incorrect password' in error_message or "Sorry, we can't find an account with this email address" in error_message:
+                update.message.reply_text('Tên đăng nhập hoặc mật khẩu không chính xác.')
+                return
         except:
             pass
-
-        if decoded is None:
-            try:
-                decoded = decode_aes(value, "mysecretpassword")
-            except:
-                pass
-
-        if decoded is None:
-            try:
-                decoded = morse.decode(value)
-            except:
-                pass
-
-        if decoded is None:
-            try:
-                huffman = HuffmanCoding()
-                decoded = huffman.huffman_decoding(value, huff_dict_global)
-            except:
-                pass
-
-        if decoded:
-            update.message.reply_text(f"<b>Decoded:</b> <code>{decoded}</code>", parse_mode=ParseMode.HTML)
-        else:
-            update.message.reply_text("Không thể giải mã dữ liệu được cung cấp.")
-    
-    except Exception as e:
-        update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
-
-def start_command(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(
-        "Chào mừng bạn đến với bot mã hóa và giải mã!\n"
-        "Sử dụng các lệnh sau:\n"
-        "/encode <loại mã hóa> <giá trị cần mã hóa>\n"
-        "/decode <giá trị cần giải mã>\n"
-        "/encrypt_audio để mã hóa file âm thanh\n"
-        "/decrypt_audio để giải mã file âm thanh\n"
-        "Gửi hình ảnh để mã hóa hoặc tệp văn bản hoặc file mã hóa để giải mã hình ảnh."
-    )
+        
+        # Kiểm tra trạng thái tài khoản
+        try:
+            plan_message = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/section/div[2]/div/div/div/div/div/div/section/div[2]/div/div[2]/h3').text
+            if 'Gói' in plan_message:
+                update.message.reply_text('Tài khoản Netflix hoạt động.')
+                return
+        except:
+            pass
+        
+        # Kiểm tra hủy tư cách thành viên
+        try:
+            membership_message = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/section/div[2]/div/div/div/div/div/div/section/div[1]/div/div').text
+            if 'Tư cách thành viên của bạn đã bị hủy' in membership_message:
+                update.message.reply_text('Tài khoản Netflix đã bị hủy tư cách thành viên.')
+                return
+        except:
+            pass
+        
+        update.message.reply_text('Không thể xác định trạng thái tài khoản.')
+    finally:
+        driver.quit()
 
 def main() -> None:
-    """Khởi động bot"""
+    # Khởi động bot
     updater = Updater(TOKEN)
-
     dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler("start", start_command))
-    dispatcher.add_handler(CommandHandler("encode", encode_command))
-    dispatcher.add_handler(CommandHandler("decode", decode_command))
-    dispatcher.add_handler(CommandHandler("encrypt_audio", encrypt_audio))
-    dispatcher.add_handler(CommandHandler("decrypt_audio", decrypt_audio))
-    dispatcher.add_handler(MessageHandler(Filters.photo, handle_image))
-    dispatcher.add_handler(MessageHandler(Filters.document.mime_type("text/plain"), handle_decode_image_file))
-
+    
+    # Đăng ký các lệnh
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CommandHandler('check', check_account))
+    
+    # Bắt đầu bot
     updater.start_polling()
     updater.idle()
 
