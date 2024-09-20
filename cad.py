@@ -12,11 +12,12 @@ TOKEN = '5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro'
 LOG_BOT_TOKEN = '5726763371:AAG7tvRAA-YOzUAKdqfYPH3zJNCrK_PFai0'
 LOG_CHAT_ID = '2077786453'
 
-# RapidAPI Key và URL cho GPT-4 và LLaMA 3
+# RapidAPI Key và URL cho GPT-4, LLaMA 3 và DALL-E
 API_KEY = "e710048e2bmshb2c56bd23b6e5c8p13c3c3jsn55207155321d"
-GPT_API_HOST = "chatgpt-42.p.rapidapi.com"
+API_HOST = "chatgpt-42.p.rapidapi.com"
 GPT_API_URL = "https://chatgpt-42.p.rapidapi.com/conversationgpt4"
 LLAMA_API_URL = "https://chatgpt-42.p.rapidapi.com/conversationllama3"
+DALL_E_API_URL = "https://chatgpt-42.p.rapidapi.com/texttoimage"
 
 # Thiết lập logging
 logging.basicConfig(
@@ -44,7 +45,7 @@ def gpt4_response(message):
     
     headers = {
         'x-rapidapi-key': API_KEY,
-        'x-rapidapi-host': GPT_API_HOST,
+        'x-rapidapi-host': API_HOST,
         'Content-Type': "application/json"
     }
     
@@ -70,7 +71,7 @@ def llama3_response(message):
     
     headers = {
         'x-rapidapi-key': API_KEY,
-        'x-rapidapi-host': GPT_API_HOST,
+        'x-rapidapi-host': API_HOST,
         'Content-Type': "application/json"
     }
     
@@ -81,6 +82,28 @@ def llama3_response(message):
         return data.get("result", "No response from LLaMA 3")
     else:
         return "Lỗi khi kết nối LLaMA 3"
+
+# Hàm gọi API DALL-E để tạo ảnh
+def generate_image(prompt):
+    payload = {
+        "text": prompt,
+        "width": 512,
+        "height": 512
+    }
+    
+    headers = {
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': API_HOST,
+        'Content-Type': "application/json"
+    }
+    
+    response = requests.post(DALL_E_API_URL, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data.get("generated_image")
+    else:
+        return None
 
 # Hàm gửi log về bot log qua Telegram
 def send_log_to_bot(log_message):
@@ -113,6 +136,35 @@ def handle_message(update: Update, context: CallbackContext) -> None:
     except Exception as e:
         update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
 
+# Xử lý lệnh /gen cho DALL-E (tạo ảnh)
+def generate_command(update: Update, context: CallbackContext) -> None:
+    try:
+        if len(context.args) == 0:
+            update.message.reply_text("Vui lòng nhập từ khoá cần tạo ảnh.")
+            return
+        
+        keyword = ' '.join(context.args)
+
+        # Gửi log tin nhắn người dùng
+        log_message = f"User: {update.message.from_user.username}, Message: {keyword}"
+        send_log_to_bot(log_message)
+
+        # Gọi API DALL-E để tạo ảnh
+        image_url = generate_image(keyword)
+
+        # Gửi log phản hồi DALL-E
+        log_reply = f"Bot Response (DALL-E): {image_url}"
+        send_log_to_bot(log_reply)
+
+        if image_url:
+            # Phản hồi lại người dùng với link ảnh
+            update.message.reply_text(f"Generation Complete! [Here]({image_url})", parse_mode=ParseMode.MARKDOWN)
+        else:
+            update.message.reply_text("Không thể tạo ảnh, vui lòng thử lại sau.")
+    
+    except Exception as e:
+        update.message.reply_text(f"Đã có lỗi xảy ra: {str(e)}")
+
 # Xử lý lệnh /ll cho API LLaMA 3
 def llama_command(update: Update, context: CallbackContext) -> None:
     try:
@@ -142,7 +194,7 @@ def llama_command(update: Update, context: CallbackContext) -> None:
 # Hàm khởi tạo bot
 def start_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
-        "Chào mừng bạn đến với bot! Hãy gửi tin nhắn bất kỳ để trò chuyện hoặc sử dụng lệnh /ll để gọi API LLaMA 3."
+        "Chào mừng bạn đến với bot! Hãy gửi tin nhắn bất kỳ để trò chuyện hoặc sử dụng lệnh /gen để tạo ảnh, /ll để gọi API LLaMA 3."
     )
 
 # Hàm khởi động bot
@@ -153,6 +205,7 @@ def main() -> None:
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", start_command))
+    dispatcher.add_handler(CommandHandler("gen", generate_command))
     dispatcher.add_handler(CommandHandler("ll", llama_command))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
