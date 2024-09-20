@@ -1,6 +1,7 @@
 import logging
 import json
 import requests
+import time
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
@@ -21,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 # Hàm gọi API DALL-E để sinh ảnh
 def generate_image(prompt):
-    payload = json.dumps({
+    payload = {
         "text": prompt,
         "width": 512,
         "height": 512
-    })
+    }
     
     headers = {
         'x-rapidapi-key': API_KEY,
@@ -33,31 +34,40 @@ def generate_image(prompt):
         'Content-Type': "application/json"
     }
     
-    response = requests.post(API_URL, data=payload, headers=headers)
+    response = requests.post(API_URL, json=payload, headers=headers)
     
     if response.status_code == 200:
         data = response.json()
-        # Giả định rằng đường link ảnh nằm trong trường 'url' của response
-        return data.get("url")
+        # Đọc link từ trường "generated_image"
+        return data.get("generated_image")
     else:
         return None
 
 # Xử lý lệnh /gen
 def generate_command(update: Update, context: CallbackContext) -> None:
     try:
-        # Lấy từ khoá từ câu lệnh
         if len(context.args) == 0:
             update.message.reply_text("Vui lòng nhập từ khoá cần tạo ảnh.")
             return
         
         keyword = ' '.join(context.args)
         
+        # Phản hồi ngay lập tức khi bắt đầu tạo ảnh
+        update.message.reply_text("Đang tạo ảnh...")
+        
+        # Bắt đầu đếm thời gian
+        start_time = time.time()
+        
         # Gọi hàm generate_image để sinh ảnh
         image_url = generate_image(keyword)
         
+        # Đo thời gian hoàn thành
+        end_time = time.time()
+        time_taken = round(end_time - start_time, 2)
+        
         if image_url:
-            # Trả về kết quả với đường link ảnh
-            update.message.reply_text(f"Generation Complete! [Here]({image_url})", parse_mode=ParseMode.MARKDOWN)
+            # Trả về kết quả với link và thời gian tạo ảnh
+            update.message.reply_text(f"Generation Complete! [Here]({image_url})\nTime Taken: {time_taken} seconds", parse_mode=ParseMode.MARKDOWN)
         else:
             update.message.reply_text("Không thể tạo ảnh, vui lòng thử lại sau.")
     
