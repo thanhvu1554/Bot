@@ -47,7 +47,6 @@ def extract_card_info(card_input):
         return cc, mes, ano, cvv
     return None
 
-
 # Hàm để tìm thông báo lỗi trong phản hồi
 def extract_error_message(response_text):
     error_match = re.search(r'class="errMsg ">(.*?)<\/a>', response_text, re.DOTALL)
@@ -122,7 +121,6 @@ async def user_credits(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(f"Bạn có {total_credit} tín dụng.")
-
 
 # Hàm xử lý tin nhắn
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -216,19 +214,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
                                f"Result: {result_message}\n")
 
+# Hàm khởi động bot
+def main():
+    application = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
 
-    else:
-        await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng thử lại.")
+    # Gán các handler
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("allow", allow_user))
+    application.add_handler(CommandHandler("unallow", unallow_user))
+    application.add_handler(CommandHandler("credit", credit_user))
+    application.add_handler(CommandHandler("user", user_credits))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-# Hàm chính để khởi động bot
+    # Bắt đầu chạy bot
+    application.run_polling()
+
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("allow", allow_user))
-    app.add_handler(CommandHandler("unallow", unallow_user))
-    app.add_handler(CommandHandler("credit", credit_user))
-    app.add_handler(CommandHandler("user", user_credits))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    app.run_polling()
+    main()
