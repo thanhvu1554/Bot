@@ -1,0 +1,237 @@
+Card: 4427562017530417, Month: 08, Year: 2028, CVV: 261, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card was declined.
+Card: 4743691069209856, Month: 03, Year: 2027, CVV: 710, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card has insufficient funds.
+Card: 4763672200794514, Month: 03, Year: 2028, CVV: 112, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card was declined.
+Card: 5415902751204160, Month: 09, Year: 24, CVV: 236, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card was declined.
+Card: 4743691069209856, Month: 03, Year: 2027, CVV: 710, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card was declined.
+
+2024-09-28 17:24:13,176 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getMe "HTTP/1.1 200 OK"
+2024-09-28 17:24:13,498 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/deleteWebhook "HTTP/1.1 200 OK"
+2024-09-28 17:24:13,499 - Scheduler started
+2024-09-28 17:24:13,499 - Application started
+2024-09-28 17:24:18,291 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:24:18,293 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_application.py", line 1335, in process_update
+    await coroutine
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_handlers\basehandler.py", line 158, in handle_update
+    return await self.callback(update, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\Downloads\BOT\bot.py", line 66, in handle_message
+    cc, mes, ano, cvv = card_info[0].split('|')  # L\u1ea5y th鬾g tin th\u1ebb t\u1eeb card_info
+    ^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 1)
+2024-09-28 17:24:28,609 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:24:38,973 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:24:49,284 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:24:59,597 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:09,910 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:20,222 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:30,534 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:40,487 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getMe "HTTP/1.1 200 OK"
+2024-09-28 17:25:40,801 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/deleteWebhook "HTTP/1.1 200 OK"
+2024-09-28 17:25:40,802 - Scheduler started
+2024-09-28 17:25:40,803 - Application started
+2024-09-28 17:25:40,860 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:41,734 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 409 Conflict"
+2024-09-28 17:25:41,734 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\futures.py", line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\tasks.py", line 267, in __step
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 384, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2024-09-28 17:25:46,053 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 409 Conflict"
+2024-09-28 17:25:46,054 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\futures.py", line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\tasks.py", line 267, in __step
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 384, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2024-09-28 17:25:46,267 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:25:46,268 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_application.py", line 1335, in process_update
+    await coroutine
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_handlers\basehandler.py", line 158, in handle_update
+    return await self.callback(update, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\Downloads\BOT\bot.py", line 66, in handle_message
+    try:
+ValueError: not enough values to unpack (expected 4, got 1)
+2024-09-28 17:25:47,367 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 409 Conflict"
+2024-09-28 17:25:47,368 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\futures.py", line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\tasks.py", line 267, in __step
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 384, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2024-09-28 17:25:51,689 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 409 Conflict"
+2024-09-28 17:25:51,690 - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 753, in _network_loop_retry
+    if not await do_action():
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 747, in do_action
+    return action_cb_task.result()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\futures.py", line 203, in result
+    raise self._exception.with_traceback(self._exception_tb)
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\asyncio\tasks.py", line 267, in __step
+    result = coro.send(None)
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_updater.py", line 377, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 649, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 4366, in get_updates
+    await self._post(
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 623, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\ext\_extbot.py", line 355, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\_bot.py", line 652, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 201, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\thanh\AppData\Local\Programs\Python\Python311\Lib\site-packages\telegram\request\_baserequest.py", line 384, in _request_wrapper
+    raise Conflict(message)
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2024-09-28 17:25:59,591 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getMe "HTTP/1.1 200 OK"
+2024-09-28 17:25:59,919 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/deleteWebhook "HTTP/1.1 200 OK"
+2024-09-28 17:25:59,920 - Scheduler started
+2024-09-28 17:25:59,921 - Application started
+2024-09-28 17:26:00,778 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:00,781 - L\u1ed7i unpacking card_info: ('5178059121658265', '08', '28', '967'), ID ng\u01b0\u1eddi d鵱g: 2077786453, L\u1ed7i: not enough values to unpack (expected 4, got 1)
+2024-09-28 17:26:01,313 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/sendMessage "HTTP/1.1 200 OK"
+2024-09-28 17:26:07,148 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:07,150 - L\u1ed7i unpacking card_info: ('5178059121658265', '08', '2028', '967'), ID ng\u01b0\u1eddi d鵱g: 2077786453, L\u1ed7i: not enough values to unpack (expected 4, got 1)
+2024-09-28 17:26:08,254 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/sendMessage "HTTP/1.1 200 OK"
+2024-09-28 17:26:17,444 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:27,732 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:38,018 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:48,299 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:26:58,581 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:27:08,865 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:27:19,146 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:27:29,429 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:27:39,736 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:27:50,025 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:00,309 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:14,958 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getMe "HTTP/1.1 200 OK"
+2024-09-28 17:28:15,268 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/deleteWebhook "HTTP/1.1 200 OK"
+2024-09-28 17:28:15,269 - Scheduler started
+2024-09-28 17:28:15,269 - Application started
+2024-09-28 17:28:17,138 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:17,140 - L\u1ed7i \u0111\u1ecbnh d\u1ea1ng card_info: ('5178059121658265', '08', '28', '967'), ID ng\u01b0\u1eddi d鵱g: 2077786453
+2024-09-28 17:28:17,673 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/sendMessage "HTTP/1.1 200 OK"
+2024-09-28 17:28:27,441 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:37,738 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:48,051 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:28:58,345 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:29:08,639 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:29:18,938 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:29:29,257 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:29:39,556 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:29:49,852 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:30:00,171 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:30:10,468 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:30:20,772 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:30:31,074 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+2024-09-28 17:30:41,401 - HTTP Request: POST https://api.telegram.org/bot5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro/getUpdates "HTTP/1.1 200 OK"
+Card: 5178059121658265, Month: 08, Year: 2028, CVV: 967, Result: Giao d峄媍h kh么ng th脿nh c么ng: An error occurred while processing your payment. Your card was declined.
+User ID: 2077786453, Card: 5178059121658265, Month: 08, Year: 2028, CVV: 000, Result: An error occurred while processing your payment. Your card was declined.
