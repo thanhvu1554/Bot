@@ -162,6 +162,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
                                f"Result: {result_message}\n")
 
+
 # Hàm chính để khởi động bot
 if __name__ == '__main__':
     app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
