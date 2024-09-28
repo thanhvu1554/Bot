@@ -216,6 +216,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
                                f"Result: {result_message}\n")
 
+
     else:
         await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng thử lại.")
 
