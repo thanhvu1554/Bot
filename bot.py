@@ -227,8 +227,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     f"Declined\n𝗖𝗮𝗿𝗱: {cc}|{mes}|{ano}|{cvv}\n𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$\n𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {error_message or 'Unknown Error'}\n𝗧𝗶𝗺𝗲: {elapsed_time} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"
                 )
-
-# Hàm khởi tạo bot
+#hàm khởi tạo bot
 async def main():
     bot_token = "5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro"
     application = ApplicationBuilder().token(bot_token).build()
@@ -242,11 +241,17 @@ async def main():
     application.add_handler(CommandHandler("proxy", set_proxy))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Gửi thông báo khi bot khởi động
+    # Khởi tạo bot trước khi bắt đầu
+    await application.initialize()
+
+    # Bắt đầu bot
+    await application.start()
     logger.info("Bot đã khởi động")
 
-    await application.start()
+    # Đợi bot idle
+    await application.updater.start_polling()
     await application.idle()
 
 if __name__ == "__main__":
     asyncio.run(main())
+
