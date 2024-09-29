@@ -256,7 +256,7 @@ async def main():
     application.add_handler(CommandHandler("allow", allow_user))
     application.add_handler(CommandHandler("unallow", unallow_user))
     application.add_handler(CommandHandler("proxy", set_proxy))
-    application.add_handler(MessageHandler(filters.text & ~filters.command, handle_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     await application.run_polling()
 
