@@ -241,17 +241,9 @@ async def main():
     application.add_handler(CommandHandler("proxy", set_proxy))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Khởi tạo bot trước khi bắt đầu
-    await application.initialize()
-
-    # Bắt đầu bot
-    await application.start()
+    # Chạy polling (thay thế cho start và initialize)
+    await application.run_polling()
     logger.info("Bot đã khởi động")
-
-    # Đợi bot idle
-    await application.updater.start_polling()
-    await application.idle()
 
 if __name__ == "__main__":
     asyncio.run(main())
-
