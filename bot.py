@@ -5,7 +5,7 @@ import aiohttp
 import asyncio
 import nest_asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from datetime import datetime
 import time
 
@@ -144,23 +144,23 @@ async def bel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
                                     }) as response:
 
-            response_text = await response.text()
-            response_time = time.time() - start_time  # Đo thời gian phản hồi
+                response_text = await response.text()
+                response_time = time.time() - start_time  # Đo thời gian phản hồi
 
-            # Kiểm tra chuyển hướng
-            if response.history and response.status == 200:
-                final_url = str(response.url)
-                if "success" in final_url:
-                    await update.message.reply_text(f"Thẻ {cc} đã được phê duyệt!")
+                # Kiểm tra chuyển hướng
+                if response.history and response.status == 200:
+                    final_url = str(response.url)
+                    if "success" in final_url:
+                        await update.message.reply_text(f"Thẻ {cc} đã được phê duyệt!")
+                    else:
+                        error_message = extract_error_message(response_text)
+                        await update.message.reply_text(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
                 else:
-                    error_message = extract_error_message(response_text)
-                    await update.message.reply_text(f"Thẻ {cc} bị từ chối: {error_message if error_message else 'Không rõ lý do.'}")
-            else:
-                await update.message.reply_text(f"Thẻ {cc} không thành công.")
+                    await update.message.reply_text(f"Thẻ {cc} không thành công.")
 
-            # Ghi log
-            with open("user_logs.txt", "a", encoding="utf-8") as log_file:
-                log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {'Approved' if 'success' in final_url else 'Declined'}\n")
+                # Ghi log
+                with open("user_logs.txt", "a", encoding="utf-8") as log_file:
+                    log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {'Approved' if 'success' in final_url else 'Declined'}\n")
     else:
         await update.message.reply_text("Thông tin thẻ không hợp lệ. Vui lòng nhập lại theo định dạng: <cc>|<mes>|<ano>|<cvv>")
 
@@ -172,7 +172,6 @@ async def main():
     app.add_handler(CommandHandler("allow", allow_user))
     app.add_handler(CommandHandler("unallow", unallow_user))
     app.add_handler(CommandHandler("bel", bel_command))  # Thêm lệnh /bel
-    # Không cần MessageHandler ở đây vì không muốn nhận diện mọi tin nhắn
 
     await app.run_polling()
 
