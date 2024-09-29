@@ -92,6 +92,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     card_info_list = user_input.splitlines()  # Tách các thẻ theo từng dòng
     card_results = []
     total_time = 0
+    found_valid_card = False  # Biến để kiểm tra nếu có thẻ hợp lệ
 
     with open("allowed_users.txt", "r") as f:
         allowed_users = {int(line.strip()) for line in f.readlines()}
@@ -103,6 +104,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for card_input in card_info_list[:10]:  # Chỉ lấy tối đa 10 thẻ
         card_info = extract_card_info(card_input)
         if card_info:
+            found_valid_card = True  # Đánh dấu là có thẻ hợp lệ
             cc, mes, ano, cvv = card_info
 
             # Kiểm tra tháng và năm hết hạn
@@ -114,7 +116,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ano = "20" + ano
             ano = int(ano)
 
-            if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
+            if ano < current_full_year hoặc (ano == current_full_year and int(mes) < current_month):
                 card_results.append(f"Thẻ {cc} hết hạn.")
                 continue
 
@@ -177,6 +179,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         else:
             card_results.append(f"Thông tin thẻ không hợp lệ: {card_input}")
+
+    if found_valid_card:
+        # Cập nhật tin nhắn cuối cùng với kết quả
+        result_message = "\n".join(card_results) + f"\nTổng thời gian: {total_time:.2f} giây"
+        await update.message.reply_text(result_message)
+
+        # Ghi log
+        with open("user_logs.txt", "a", encoding="utf-8") as log_file:  # Ghi log với mã hóa utf-8
+            for card_input, result in zip(card_info_list[:10], card_results):
+                card_info = extract_card_info(card_input)
+                if card_info:
+                    cc, mes, ano, cvv = card_info
+                    log_file.write(f"User ID: {update.effective_user.id}, Card: {cc}, Month: {mes}, Year: {ano}, CVV: {cvv}, Result: {result}\n")
+                else:
+                    log_file.write(f"User ID: {update.effective_user.id}, Result: Thông tin thẻ không hợp lệ: {card_input}\n")
+    else:
+        await update.message.reply_text("Tin nhắn không chứa thông tin thẻ hợp lệ.")
+
 
     # Cập nhật tin nhắn cuối cùng với kết quả
     result_message = "\n".join(card_results) + f"\nTổng thời gian: {total_time:.2f} giây"
