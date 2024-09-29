@@ -116,7 +116,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ano = "20" + ano
             ano = int(ano)
 
-            if ano < current_full_year hoặc (ano == current_full_year and int(mes) < current_month):
+            if ano < current_full_year or (ano == current_full_year and int(mes) < current_month):
                 card_results.append(f"Thẻ {cc} hết hạn.")
                 continue
 
